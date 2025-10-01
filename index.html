@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Blockudoku Game</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <meta name="theme-color" content="#1a1a2e"/>
+    <link rel="manifest" href="manifest.json">
+
+</head>
+<body>
+    <h1>Blockudoku</h1>
+    <div class="score-container">
+        <h2>Score: <span id="score">0</span></h2>
+    </div>
+    <div id="game-container">
+        <div id="game-grid"></div>
+    </div>
+    <div id="pieces-container"></div>
+
+    <div id="game-over-modal" class="hidden">
+        <div class="modal-content">
+            <h2>Game Over!</h2>
+            <p>Your final score is <span id="final-score">0</span>.</p>
+            <button id="restart-button">Play Again</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/service-worker.js')
+            .then(registration => console.log('Service Worker registered!'))
+            .catch(err => console.log('Service Worker registration failed: ', err));
+        });
+      }
+    </script>
+</body>
+</html>
