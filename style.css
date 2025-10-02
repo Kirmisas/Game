@@ -1,28 +1,5 @@
 :root {
-    /* Day Mode Colors */
-    --bg-color: #f0f4f8;
-    --text-color: #333;
-    --grid-border-color: #aebfd0;
-    --game-bg-color: #c9d8e5;
-    --cell-a-color: #e0e6ed;
-    --cell-b-color: #cbd7e3;
-    --filled-border-color: #9aaabb;
-    --highlight-color: #3f51b5;
-    --highlight-shadow-color: #7986cb;
-    --restart-button-bg: #4caf50;
-    --modal-bg: #e0e6ed;
-    --modal-border: #aebfd0;
-    /* UPDATED: Ghost color for light background */
-    --ghost-color: rgba(0, 0, 0, 0.3);
-
-    /* Responsive sizes */
-    --cell-size: 9vw;
-    --gap-size: 0.5vw;
-    --piece-cell-size: 5vw;
-}
-
-/* Night Mode Colors */
-body.dark-mode {
+    /* UPDATED: Dark Mode is now the default theme */
     --bg-color: #1a1a2e;
     --text-color: #e0e0e0;
     --grid-border-color: #4a4e69;
@@ -35,11 +12,31 @@ body.dark-mode {
     --restart-button-bg: #e94560;
     --modal-bg: #1e1e3f;
     --modal-border: #4a4e69;
-    /* UPDATED: Ghost color for dark background */
     --ghost-color: rgba(255, 255, 255, 0.3);
+
+    /* Responsive sizes */
+    --cell-size: 9vw;
+    --gap-size: 0.5vw;
+    --piece-cell-size: 5vw;
 }
 
-/* Use larger, fixed sizes on tablets and desktops */
+/* Light Mode Colors */
+body.light-mode {
+    --bg-color: #f0f4f8;
+    --text-color: #333;
+    --grid-border-color: #aebfd0;
+    --game-bg-color: #c9d8e5;
+    --cell-a-color: #e0e6ed;
+    --cell-b-color: #cbd7e3;
+    --filled-border-color: #9aaabb;
+    --highlight-color: #3f51b5;
+    --highlight-shadow-color: #7986cb;
+    --restart-button-bg: #4caf50;
+    --modal-bg: #e0e6ed;
+    --modal-border: #aebfd0;
+    --ghost-color: rgba(0, 0, 0, 0.3);
+}
+
 @media (min-width: 768px) {
     :root {
         --cell-size: 40px;
@@ -63,10 +60,7 @@ body {
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-h1 {
-    font-size: 8vw;
-    margin-bottom: 2vh;
-}
+h1 { font-size: 8vw; margin-bottom: 2vh; }
 
 .score-container {
     margin-bottom: 2vh;
@@ -124,7 +118,6 @@ h1 {
     border-radius: 4px;
 }
 
-/* UPDATED: Now uses the theme-aware variable */
 .ghost {
     background-color: var(--ghost-color) !important;
     border-radius: 4px;
@@ -158,13 +151,13 @@ h1 {
     touch-action: none;
 }
 
+/* UPDATED: New style for dragging. Centers the piece on your finger and scales it up. */
 .dragging-clone {
     position: absolute;
     pointer-events: none;
-    opacity: 0.8;
-    transform: scale(1.1);
+    opacity: 0.75; /* Slightly more transparent */
+    transform: translate(-50%, -50%) scale(1.2); /* Center on cursor/finger and enlarge */
     z-index: 1000;
-    filter: drop-shadow(0 5px 10px rgba(0,0,0,0.5));
 }
 
 .piece-cell {
