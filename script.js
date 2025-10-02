@@ -20,8 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let draggedPieceData = null;
     let originalPieceElement = null;
     let draggingClone = null;
-    let touchOffset = { x: 0, y: 0, row: 0, col: 0 }; // RE-ADDED x and y
-    // UPDATED: Re-added constants for a 100px vertical offset
+    let touchOffset = { x: 0, y: 0, row: 0, col: 0 };
     const LIFTED_OFFSET_X = 0;
     const LIFTED_OFFSET_Y = -100;
 
@@ -106,7 +105,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
         
         const pieceCellSize = rect.width / draggedPieceData.shape[0].length;
-        // RE-ADDED x and y offset calculation
         touchOffset.x = clientX - rect.left;
         touchOffset.y = clientY - rect.top;
         touchOffset.col = Math.floor(touchOffset.x / pieceCellSize);
@@ -116,7 +114,6 @@ document.addEventListener('DOMContentLoaded', () => {
         draggingClone.classList.add('dragging-clone');
         document.body.appendChild(draggingClone);
         
-        // UPDATED: Position the clone using the 100px offset
         draggingClone.style.left = `${clientX - touchOffset.x + LIFTED_OFFSET_X}px`;
         draggingClone.style.top = `${clientY - touchOffset.y + LIFTED_OFFSET_Y}px`;
         
@@ -139,13 +136,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
         const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
 
-        // UPDATED: Move the clone using the 100px offset
         draggingClone.style.left = `${clientX - touchOffset.x + LIFTED_OFFSET_X}px`;
         draggingClone.style.top = `${clientY - touchOffset.y + LIFTED_OFFSET_Y}px`;
 
         clearAllPreviews();
-        // The logic for placing the piece still uses the direct finger/cursor position for accuracy
-        const targetCell = getCellFromPoint(clientX, clientY); 
+        // UPDATED: Use the offset to find the target cell where the clone is visually
+        const targetCell = getCellFromPoint(clientX, clientY + LIFTED_OFFSET_Y); 
         
         if (targetCell) {
             const baseRow = parseInt(targetCell.dataset.row) - touchOffset.row;
@@ -166,7 +162,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const clientX = e.type === 'touchend' ? e.changedTouches[0].clientX : e.clientX;
         const clientY = e.type === 'touchend' ? e.changedTouches[0].clientY : e.clientY;
         
-        const targetCell = getCellFromPoint(clientX, clientY);
+        // UPDATED: Use the offset to find the target cell where the clone is visually
+        const targetCell = getCellFromPoint(clientX, clientY + LIFTED_OFFSET_Y);
         let placed = false;
 
         if (targetCell) {
