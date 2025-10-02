@@ -20,9 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let draggedPieceData = null;
     let originalPieceElement = null;
     let draggingClone = null;
-    let touchOffset = { x: 0, y: 0, row: 0, col: 0 };
-    const LIFTED_OFFSET_X = 0;
-    const LIFTED_OFFSET_Y = -100;
+    let touchOffset = { row: 0, col: 0 };
 
     // --- Game Initialization ---
     function initGame() {
@@ -48,21 +46,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Theme Logic ---
     function applySavedTheme() {
-        if (localStorage.getItem('theme') === 'dark') {
-            document.body.classList.add('dark-mode');
+        // UPDATED: Defaults to dark, applies light mode if saved
+        if (localStorage.getItem('theme') === 'light') {
+            document.body.classList.add('light-mode');
         } else {
-            document.body.classList.remove('dark-mode');
+            document.body.classList.remove('light-mode');
         }
     }
     
-    // FIXED: Check if the button exists before adding a listener to prevent crashes.
     if (themeToggleButton) {
         themeToggleButton.addEventListener('click', () => {
-            document.body.classList.toggle('dark-mode');
-            if (document.body.classList.contains('dark-mode')) {
-                localStorage.setItem('theme', 'dark');
-            } else {
+            document.body.classList.toggle('light-mode');
+            if (document.body.classList.contains('light-mode')) {
                 localStorage.setItem('theme', 'light');
+            } else {
+                localStorage.setItem('theme', 'dark');
             }
         });
     }
@@ -105,18 +103,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
         const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
         
-        const pieceCellSize = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--piece-cell-size'));
-        touchOffset.x = clientX - rect.left;
-        touchOffset.y = clientY - rect.top;
-        touchOffset.col = Math.floor(touchOffset.x / pieceCellSize);
-        touchOffset.row = Math.floor(touchOffset.y / pieceCellSize);
+        const pieceCellSize = rect.width / draggedPieceData.shape[0].length;
+        // Calculate which cell of the piece was grabbed
+        touchOffset.col = Math.floor((clientX - rect.left) / pieceCellSize);
+        touchOffset.row = Math.floor((clientY - rect.top) / pieceCellSize);
         
         draggingClone = originalPieceElement.cloneNode(true);
         draggingClone.classList.add('dragging-clone');
         document.body.appendChild(draggingClone);
         
-        draggingClone.style.left = `${clientX - touchOffset.x + LIFTED_OFFSET_X}px`;
-        draggingClone.style.top = `${clientY - touchOffset.y + LIFTED_OFFSET_Y}px`;
+        // Position the clone centered on the cursor/finger
+        draggingClone.style.left = `${clientX}px`;
+        draggingClone.style.top = `${clientY}px`;
         
         originalPieceElement.style.opacity = '0.3';
 
@@ -137,13 +135,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
         const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
 
-        draggingClone.style.left = `${clientX - touchOffset.x + LIFTED_OFFSET_X}px`;
-        draggingClone.style.top = `${clientY - touchOffset.y + LIFTED_OFFSET_Y}px`;
+        draggingClone.style.left = `${clientX}px`;
+        draggingClone.style.top = `${clientY}px`;
 
         clearAllPreviews();
         const targetCell = getCellFromPoint(clientX, clientY);
         
         if (targetCell) {
+            // Adjust placement based on which part of the piece was grabbed
             const baseRow = parseInt(targetCell.dataset.row) - touchOffset.row;
             const baseCol = parseInt(targetCell.dataset.col) - touchOffset.col;
             
@@ -181,7 +180,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        if (!placed) {
+        if (!placed && originalPieceElement) {
             originalPieceElement.style.opacity = '1';
         }
         
