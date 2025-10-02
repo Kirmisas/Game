@@ -20,7 +20,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let draggedPieceData = null;
     let originalPieceElement = null;
     let draggingClone = null;
-    let touchOffset = { row: 0, col: 0 };
+    let touchOffset = { x: 0, y: 0, row: 0, col: 0 }; // RE-ADDED x and y
+    // UPDATED: Re-added constants for a 100px vertical offset
+    const LIFTED_OFFSET_X = 0;
+    const LIFTED_OFFSET_Y = -100;
 
     // --- Game Initialization ---
     function initGame() {
@@ -46,7 +49,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Theme Logic ---
     function applySavedTheme() {
-        // UPDATED: Defaults to dark, applies light mode if saved
         if (localStorage.getItem('theme') === 'light') {
             document.body.classList.add('light-mode');
         } else {
@@ -104,17 +106,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
         
         const pieceCellSize = rect.width / draggedPieceData.shape[0].length;
-        // Calculate which cell of the piece was grabbed
-        touchOffset.col = Math.floor((clientX - rect.left) / pieceCellSize);
-        touchOffset.row = Math.floor((clientY - rect.top) / pieceCellSize);
+        // RE-ADDED x and y offset calculation
+        touchOffset.x = clientX - rect.left;
+        touchOffset.y = clientY - rect.top;
+        touchOffset.col = Math.floor(touchOffset.x / pieceCellSize);
+        touchOffset.row = Math.floor(touchOffset.y / pieceCellSize);
         
         draggingClone = originalPieceElement.cloneNode(true);
         draggingClone.classList.add('dragging-clone');
         document.body.appendChild(draggingClone);
         
-        // Position the clone centered on the cursor/finger
-        draggingClone.style.left = `${clientX}px`;
-        draggingClone.style.top = `${clientY}px`;
+        // UPDATED: Position the clone using the 100px offset
+        draggingClone.style.left = `${clientX - touchOffset.x + LIFTED_OFFSET_X}px`;
+        draggingClone.style.top = `${clientY - touchOffset.y + LIFTED_OFFSET_Y}px`;
         
         originalPieceElement.style.opacity = '0.3';
 
@@ -135,14 +139,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
         const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
 
-        draggingClone.style.left = `${clientX}px`;
-        draggingClone.style.top = `${clientY}px`;
+        // UPDATED: Move the clone using the 100px offset
+        draggingClone.style.left = `${clientX - touchOffset.x + LIFTED_OFFSET_X}px`;
+        draggingClone.style.top = `${clientY - touchOffset.y + LIFTED_OFFSET_Y}px`;
 
         clearAllPreviews();
-        const targetCell = getCellFromPoint(clientX, clientY);
+        // The logic for placing the piece still uses the direct finger/cursor position for accuracy
+        const targetCell = getCellFromPoint(clientX, clientY); 
         
         if (targetCell) {
-            // Adjust placement based on which part of the piece was grabbed
             const baseRow = parseInt(targetCell.dataset.row) - touchOffset.row;
             const baseCol = parseInt(targetCell.dataset.col) - touchOffset.col;
             
