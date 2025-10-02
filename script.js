@@ -11,20 +11,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Game Constants & State ---
     const GRID_SIZE = 9;
     const CLEAR_ANIMATION_DURATION = 400;
-    // UPDATED: The 3x3 block has been completely removed from this list.
     const PIECE_DEFINITIONS = [
-        { shape: [[1]], color: '#FFADAD' },
-        { shape: [[1, 1]], color: '#FFD6A5' },
-        { shape: [[1], [1]], color: '#FFD6A5' },
-        { shape: [[1, 1, 1]], color: '#FDFFB6' },
-        { shape: [[1], [1], [1]], color: '#FDFFB6' },
-        { shape: [[1, 1], [1, 1]], color: '#CAFFBF' }, // 2x2 block is now the largest square.
-        { shape: [[1, 1, 1], [1, 0, 0]], color: '#9BF6FF' },
-        { shape: [[1, 1], [0, 1], [0, 1]], color: '#9BF6FF' },
-        { shape: [[0, 1, 1], [1, 1, 0]], color: '#A0C4FF' },
-        { shape: [[1, 0], [1, 1], [0, 1]], color: '#A0C4FF' },
-        { shape: [[1, 1, 1, 1]], color: '#BDB2FF' },
-        { shape: [[1], [1], [1], [1]], color: '#BDB2FF' },
+        { shape: [[1]], color: '#FFADAD' }, { shape: [[1, 1]], color: '#FFD6A5' }, { shape: [[1], [1]], color: '#FFD6A5' }, { shape: [[1, 1, 1]], color: '#FDFFB6' }, { shape: [[1], [1], [1]], color: '#FDFFB6' }, { shape: [[1, 1], [1, 1]], color: '#CAFFBF' }, { shape: [[1, 1, 1], [1, 0, 0]], color: '#9BF6FF' }, { shape: [[1, 1], [0, 1], [0, 1]], color: '#9BF6FF' }, { shape: [[0, 1, 1], [1, 1, 0]], color: '#A0C4FF' }, { shape: [[1, 0], [1, 1], [0, 1]], color: '#A0C4FF' }, { shape: [[1, 1, 1, 1]], color: '#BDB2FF' }, { shape: [[1], [1], [1], [1]], color: '#BDB2FF' },
     ];
     let gridState = [], currentScore = 0, currentPieces = [], isClearing = false, isDragging = false;
 
@@ -33,7 +21,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let originalPieceElement = null;
     let draggingClone = null;
     let touchOffset = { x: 0, y: 0, row: 0, col: 0 };
-    // UPDATED: Offset for lifted piece is now 100px up.
     const LIFTED_OFFSET_X = 0;
     const LIFTED_OFFSET_Y = -100;
 
@@ -67,15 +54,18 @@ document.addEventListener('DOMContentLoaded', () => {
             document.body.classList.remove('dark-mode');
         }
     }
-
-    themeToggleButton.addEventListener('click', () => {
-        document.body.classList.toggle('dark-mode');
-        if (document.body.classList.contains('dark-mode')) {
-            localStorage.setItem('theme', 'dark');
-        } else {
-            localStorage.setItem('theme', 'light');
-        }
-    });
+    
+    // FIXED: Check if the button exists before adding a listener to prevent crashes.
+    if (themeToggleButton) {
+        themeToggleButton.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            if (document.body.classList.contains('dark-mode')) {
+                localStorage.setItem('theme', 'dark');
+            } else {
+                localStorage.setItem('theme', 'light');
+            }
+        });
+    }
 
     // --- Rendering ---
     function renderGrid() { for (let r = 0; r < GRID_SIZE; r++) { for (let c = 0; c < GRID_SIZE; c++) { const cell = gridElement.querySelector(`[data-row='${r}'][data-col='${c}']`); if (gridState[r][c]) { cell.style.backgroundColor = gridState[r][c]; cell.classList.add('filled'); } else { cell.style.backgroundColor = ''; cell.classList.remove('filled'); } } } }
