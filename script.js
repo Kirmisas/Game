@@ -22,8 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let draggingClone = null;
     let touchOffset = { x: 0, y: 0, row: 0, col: 0 };
     const LIFTED_OFFSET_X = 0;
-    const LIFTED_OFFSET_Y = -80;
-    // NEW: Variable to cache the grid's position for performance
+    const LIFTED_OFFSET_Y = -100;
     let gridRect = null;
 
     // --- Game Initialization ---
@@ -98,7 +97,6 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         isDragging = true;
         
-        // Cache the grid's position and dimensions
         gridRect = gridElement.getBoundingClientRect();
         
         originalPieceElement = e.currentTarget;
@@ -145,7 +143,6 @@ document.addEventListener('DOMContentLoaded', () => {
         draggingClone.style.top = `${clientY - touchOffset.y + LIFTED_OFFSET_Y}px`;
 
         clearAllPreviews();
-        // UPDATED: Use the new, precise calculation instead of elementFromPoint
         const targetCell = getCellFromCoordinates(clientX, clientY + LIFTED_OFFSET_Y); 
         
         if (targetCell) {
@@ -167,7 +164,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const clientX = e.type === 'touchend' ? e.changedTouches[0].clientX : e.clientX;
         const clientY = e.type === 'touchend' ? e.changedTouches[0].clientY : e.clientY;
         
-        // UPDATED: Use the new, precise calculation here as well
         const targetCell = getCellFromCoordinates(clientX, clientY + LIFTED_OFFSET_Y);
         let placed = false;
 
@@ -198,7 +194,7 @@ document.addEventListener('DOMContentLoaded', () => {
         draggedPieceData = null;
         originalPieceElement = null;
         draggingClone = null;
-        gridRect = null; // Clear cached grid position
+        gridRect = null;
         clearAllPreviews();
 
         if (e.type === 'mouseup') {
@@ -211,24 +207,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Helper & Logic Functions ---
-    // NEW: Precise mathematical function to find a cell from screen coordinates.
+    // UPDATED: This function is now more robust for off-grid positions.
     function getCellFromCoordinates(x, y) {
-        if (!gridRect) return null; // Exit if grid position isn't cached
+        if (!gridRect) return null;
 
-        // Calculate position relative to the grid
         const relativeX = x - gridRect.left;
         const relativeY = y - gridRect.top;
 
-        // Check if the coordinates are outside the grid's bounds
-        if (relativeX < 0 || relativeX > gridRect.width || relativeY < 0 || relativeY > gridRect.height) {
-            return null;
-        }
+        // REMOVED the early exit for out-of-bounds checks.
+        // The math below will now calculate the "projected" cell on the edge.
 
-        // Calculate the row and column index
         const col = Math.floor((relativeX / gridRect.width) * GRID_SIZE);
         const row = Math.floor((relativeY / gridRect.height) * GRID_SIZE);
 
-        // Clamp values to be safe and get the element
         const finalCol = Math.max(0, Math.min(GRID_SIZE - 1, col));
         const finalRow = Math.max(0, Math.min(GRID_SIZE - 1, row));
         
@@ -259,4 +250,3 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Start the game ---
     initGame();
 });
-
