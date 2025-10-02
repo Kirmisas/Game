@@ -8,6 +8,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const restartButton = document.getElementById('restart-button');
     const themeToggleButton = document.getElementById('theme-toggle');
 
+    // --- NEW: Sound Effects ---
+    const placeSound = new Audio('sounds/place.mp3');
+    const clearSound = new Audio('sounds/clear.mp3');
+    placeSound.volume = 0.5; // Adjust volume as needed
+    clearSound.volume = 0.4;
+
     // --- Game Constants & State ---
     const GRID_SIZE = 9;
     const CLEAR_ANIMATION_DURATION = 400;
@@ -172,6 +178,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const baseCol = parseInt(targetCell.dataset.col) - touchOffset.col;
             
             if (canPlacePiece(baseRow, baseCol, draggedPieceData.shape)) {
+                placeSound.play(); // Play sound on successful placement
                 placePiece(baseRow, baseCol, draggedPieceData.shape, draggedPieceData.color);
                 originalPieceElement.remove();
                 const pieceId = parseInt(originalPieceElement.dataset.pieceId);
@@ -207,22 +214,45 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Helper & Logic Functions ---
-    // UPDATED: This function is now more robust for off-grid positions.
+    // NEW: Function to show animated points
+    function showPointsAnimation(points, cells) {
+        let totalX = 0, totalY = 0;
+        cells.forEach(coord => {
+            const [r, c] = coord.split('-');
+            const cellElement = gridElement.querySelector(`[data-row='${r}'][data-col='${c}']`);
+            const rect = cellElement.getBoundingClientRect();
+            totalX += rect.left + rect.width / 2;
+            totalY += rect.top + rect.height / 2;
+        });
+        const centerX = totalX / cells.size;
+        const centerY = totalY / cells.size;
+
+        const pointsElement = document.createElement('div');
+        pointsElement.classList.add('points-popup');
+        pointsElement.textContent = `+${points}`;
+        
+        // Position the popup at the center of the cleared area
+        pointsElement.style.left = `${centerX}px`;
+        pointsElement.style.top = `${centerY}px`;
+        // The transform in CSS will center it on this point
+        pointsElement.style.transform = 'translate(-50%, -50%)';
+
+        document.body.appendChild(pointsElement);
+
+        // Remove the element after the animation finishes
+        setTimeout(() => {
+            pointsElement.remove();
+        }, 1200); // Must match animation duration in CSS
+    }
+
     function getCellFromCoordinates(x, y) {
         if (!gridRect) return null;
-
         const relativeX = x - gridRect.left;
         const relativeY = y - gridRect.top;
-
-        // REMOVED the early exit for out-of-bounds checks.
-        // The math below will now calculate the "projected" cell on the edge.
-
         const col = Math.floor((relativeX / gridRect.width) * GRID_SIZE);
         const row = Math.floor((relativeY / gridRect.height) * GRID_SIZE);
-
         const finalCol = Math.max(0, Math.min(GRID_SIZE - 1, col));
         const finalRow = Math.max(0, Math.min(GRID_SIZE - 1, row));
-        
         return gridElement.querySelector(`[data-row='${finalRow}'][data-col='${finalCol}']`);
     }
     
@@ -241,7 +271,27 @@ document.addEventListener('DOMContentLoaded', () => {
         return cellsToHighlight;
     }
 
-    function checkForClears() { let cellsToClear = new Set(); let linesCleared = 0; for (let r = 0; r < GRID_SIZE; r++) { if (gridState[r].every(cell => cell !== null)) { linesCleared++; for (let c = 0; c < GRID_SIZE; c++) cellsToClear.add(`${r}-${c}`); } } for (let c = 0; c < GRID_SIZE; c++) { if (gridState.every(row => row[c] !== null)) { linesCleared++; for (let r = 0; r < GRID_SIZE; r++) cellsToClear.add(`${r}-${c}`); } } for (let sqR = 0; sqR < 3; sqR++) { for (let sqC = 0; sqC < 3; sqC++) { let isFull = true; let squareCells = []; for (let r_off = 0; r_off < 3; r_off++) { for (let c_off = 0; c_off < 3; c_off++) { const r = sqR * 3 + r_off; const c = sqC * 3 + c_off; squareCells.push(`${r}-${c}`); if (gridState[r][c] === null) isFull = false; } } if (isFull) { linesCleared++; squareCells.forEach(cell => cellsToClear.add(cell)); } } } if (cellsToClear.size > 0) { isClearing = true; cellsToClear.forEach(coord => { const [r, c] = coord.split('-'); gridElement.querySelector(`[data-row='${r}'][data-col='${c}']`).classList.add('clearing'); }); updateScore(linesCleared * 18 * linesCleared); setTimeout(() => { cellsToClear.forEach(coord => { const [r, c] = coord.split('-'); gridState[r][c] = null; }); renderGrid(); isClearing = false; if (isGameOver()) endGame(); }, CLEAR_ANIMATION_DURATION); } else { if (isGameOver()) endGame(); } }
+    function checkForClears() { let cellsToClear = new Set(); let linesCleared = 0; for (let r = 0; r < GRID_SIZE; r++) { if (gridState[r].every(cell => cell !== null)) { linesCleared++; for (let c = 0; c < GRID_SIZE; c++) cellsToClear.add(`${r}-${c}`); } } for (let c = 0; c < GRID_SIZE; c++) { if (gridState.every(row => row[c] !== null)) { linesCleared++; for (let r = 0; r < GRID_SIZE; r++) cellsToClear.add(`${r}-${c}`); } } for (let sqR = 0; sqR < 3; sqR++) { for (let sqC = 0; sqC < 3; sqC++) { let isFull = true; let squareCells = []; for (let r_off = 0; r_off < 3; r_off++) { for (let c_off = 0; c_off < 3; c_off++) { const r = sqR * 3 + r_off; const c = sqC * 3 + c_off; squareCells.push(`${r}-${c}`); if (gridState[r][c] === null) isFull = false; } } if (isFull) { linesCleared++; squareCells.forEach(cell => cellsToClear.add(cell)); } } } if (cellsToClear.size > 0) {
+        isClearing = true;
+        clearSound.play(); // Play clear sound
+        
+        const points = linesCleared * 18 * linesCleared; // Calculate points
+        showPointsAnimation(points, cellsToClear); // Show points animation
+        
+        cellsToClear.forEach(coord => { const [r, c] = coord.split('-'); gridElement.querySelector(`[data-row='${r}'][data-col='${c}']`).classList.add('clearing'); });
+        updateScore(points);
+        setTimeout(() => {
+            cellsToClear.forEach(coord => {
+                const [r, c] = coord.split('-');
+                gridState[r][c] = null;
+            });
+            renderGrid();
+            isClearing = false;
+            if (isGameOver()) endGame();
+        }, CLEAR_ANIMATION_DURATION);
+    } else {
+        if (isGameOver()) endGame();
+    } }
     function isGameOver() { const availablePieces = currentPieces.filter(p => p !== null); if (availablePieces.length === 0) return false; for (const piece of availablePieces) { for (let r = 0; r < GRID_SIZE; r++) { for (let c = 0; c < GRID_SIZE; c++) { if (canPlacePiece(r, c, piece.shape)) return false; } } } return true; }
     function updateScore(points) { currentScore += points; scoreElement.textContent = currentScore; }
     function endGame() { finalScoreElement.textContent = currentScore; gameOverModal.classList.remove('hidden'); }
