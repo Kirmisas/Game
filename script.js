@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let draggingClone = null;
     let touchOffset = { x: 0, y: 0, row: 0, col: 0 };
     const LIFTED_OFFSET_X = 0;
-    const LIFTED_OFFSET_Y = -100;
+    const LIFTED_OFFSET_Y = -80;
     // NEW: Variable to cache the grid's position for performance
     let gridRect = null;
 
@@ -259,3 +259,4 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Start the game ---
     initGame();
 });
+
