@@ -1,5 +1,5 @@
 :root {
-    /* UPDATED: Dark Mode is now the default theme */
+    /* Dark Mode is now the default theme */
     --bg-color: #1a1a2e;
     --text-color: #e0e0e0;
     --grid-border-color: #4a4e69;
@@ -151,13 +151,13 @@ h1 { font-size: 8vw; margin-bottom: 2vh; }
     touch-action: none;
 }
 
-/* UPDATED: New style for dragging. Centers the piece on your finger and scales it up. */
+/* UPDATED: Removed the transform property to allow the JS offset to work correctly. */
 .dragging-clone {
     position: absolute;
     pointer-events: none;
-    opacity: 0.75; /* Slightly more transparent */
-    transform: translate(-50%, -50%) scale(1.2); /* Center on cursor/finger and enlarge */
+    opacity: 0.8;
     z-index: 1000;
+    filter: drop-shadow(0 5px 10px rgba(0,0,0,0.5));
 }
 
 .piece-cell {
