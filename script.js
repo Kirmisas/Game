@@ -6,13 +6,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const gameOverModal = document.getElementById('game-over-modal');
     const finalScoreElement = document.getElementById('final-score');
     const restartButton = document.getElementById('restart-button');
-    const themeToggleButton = document.getElementById('theme-toggle'); // NEW
+    const themeToggleButton = document.getElementById('theme-toggle');
 
     // --- Game Constants & State ---
     const GRID_SIZE = 9;
     const CLEAR_ANIMATION_DURATION = 400;
-    // Removed the 3x3 square block
-    const PIECE_DEFINITIONS = [ { shape: [[1]], color: '#FFADAD' }, { shape: [[1, 1]], color: '#FFD6A5' }, { shape: [[1], [1]], color: '#FFD6A5' }, { shape: [[1, 1, 1]], color: '#FDFFB6' }, { shape: [[1], [1], [1]], color: '#FDFFB6' }, { shape: [[1, 1], [1, 1]], color: '#CAFFBF' }, { shape: [[1, 1, 1], [1, 0, 0]], color: '#9BF6FF' }, { shape: [[1, 1], [0, 1], [0, 1]], color: '#9BF6FF' }, { shape: [[0, 1, 1], [1, 1, 0]], color: '#A0C4FF' }, { shape: [[1, 0], [1, 1], [0, 1]], color: '#A0C4FF' }, { shape: [[1, 1, 1, 1]], color: '#BDB2FF' }, { shape: [[1], [1], [1], [1]], color: '#BDB2FF' }, ];
+    // UPDATED: The 3x3 block has been completely removed from this list.
+    const PIECE_DEFINITIONS = [
+        { shape: [[1]], color: '#FFADAD' },
+        { shape: [[1, 1]], color: '#FFD6A5' },
+        { shape: [[1], [1]], color: '#FFD6A5' },
+        { shape: [[1, 1, 1]], color: '#FDFFB6' },
+        { shape: [[1], [1], [1]], color: '#FDFFB6' },
+        { shape: [[1, 1], [1, 1]], color: '#CAFFBF' }, // 2x2 block is now the largest square.
+        { shape: [[1, 1, 1], [1, 0, 0]], color: '#9BF6FF' },
+        { shape: [[1, 1], [0, 1], [0, 1]], color: '#9BF6FF' },
+        { shape: [[0, 1, 1], [1, 1, 0]], color: '#A0C4FF' },
+        { shape: [[1, 0], [1, 1], [0, 1]], color: '#A0C4FF' },
+        { shape: [[1, 1, 1, 1]], color: '#BDB2FF' },
+        { shape: [[1], [1], [1], [1]], color: '#BDB2FF' },
+    ];
     let gridState = [], currentScore = 0, currentPieces = [], isClearing = false, isDragging = false;
 
     // --- Drag & Touch State ---
@@ -20,9 +33,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let originalPieceElement = null;
     let draggingClone = null;
     let touchOffset = { x: 0, y: 0, row: 0, col: 0 };
-    // NEW: Offset for lifted piece
-    const LIFTED_OFFSET_X = -15; // pixels right of touch
-    const LIFTED_OFFSET_Y = -15; // pixels below touch
+    // UPDATED: Offset for lifted piece is now 100px up.
+    const LIFTED_OFFSET_X = 0;
+    const LIFTED_OFFSET_Y = -100;
 
     // --- Game Initialization ---
     function initGame() {
@@ -43,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
         gameOverModal.classList.add('hidden');
         generateNewPieces();
         renderGrid();
-        applySavedTheme(); // NEW: Apply theme on init
+        applySavedTheme();
     }
 
     // --- Theme Logic ---
@@ -102,25 +115,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
         const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
         
-        // Calculate the touch/click offset within the piece
         const pieceCellSize = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--piece-cell-size'));
         touchOffset.x = clientX - rect.left;
         touchOffset.y = clientY - rect.top;
         touchOffset.col = Math.floor(touchOffset.x / pieceCellSize);
         touchOffset.row = Math.floor(touchOffset.y / pieceCellSize);
         
-        // Create a visual clone for dragging
         draggingClone = originalPieceElement.cloneNode(true);
         draggingClone.classList.add('dragging-clone');
         document.body.appendChild(draggingClone);
         
-        // Position the clone
-        draggingClone.style.left = `${clientX - touchOffset.x + LIFTED_OFFSET_X}px`; // NEW: Added LIFTED_OFFSET_X
-        draggingClone.style.top = `${clientY - touchOffset.y + LIFTED_OFFSET_Y}px`;  // NEW: Added LIFTED_OFFSET_Y
+        draggingClone.style.left = `${clientX - touchOffset.x + LIFTED_OFFSET_X}px`;
+        draggingClone.style.top = `${clientY - touchOffset.y + LIFTED_OFFSET_Y}px`;
         
         originalPieceElement.style.opacity = '0.3';
 
-        // Add move and end listeners
         if (e.type === 'mousedown') {
             document.addEventListener('mousemove', handleDragMove);
             document.addEventListener('mouseup', handleDragEnd);
@@ -138,9 +147,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
         const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
 
-        // Move the clone
-        draggingClone.style.left = `${clientX - touchOffset.x + LIFTED_OFFSET_X}px`; // NEW: Added LIFTED_OFFSET_X
-        draggingClone.style.top = `${clientY - touchOffset.y + LIFTED_OFFSET_Y}px`;  // NEW: Added LIFTED_OFFSET_Y
+        draggingClone.style.left = `${clientX - touchOffset.x + LIFTED_OFFSET_X}px`;
+        draggingClone.style.top = `${clientY - touchOffset.y + LIFTED_OFFSET_Y}px`;
 
         clearAllPreviews();
         const targetCell = getCellFromPoint(clientX, clientY);
@@ -160,3 +168,80 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Universal Drag End (Mouse & Touch) ---
     function handleDragEnd(e) {
         if (!isDragging) return;
+
+        const clientX = e.type === 'touchend' ? e.changedTouches[0].clientX : e.clientX;
+        const clientY = e.type === 'touchend' ? e.changedTouches[0].clientY : e.clientY;
+        
+        const targetCell = getCellFromPoint(clientX, clientY);
+        let placed = false;
+
+        if (targetCell) {
+            const baseRow = parseInt(targetCell.dataset.row) - touchOffset.row;
+            const baseCol = parseInt(targetCell.dataset.col) - touchOffset.col;
+            
+            if (canPlacePiece(baseRow, baseCol, draggedPieceData.shape)) {
+                placePiece(baseRow, baseCol, draggedPieceData.shape, draggedPieceData.color);
+                originalPieceElement.remove();
+                const pieceId = parseInt(originalPieceElement.dataset.pieceId);
+                currentPieces[pieceId] = null;
+                if (currentPieces.every(p => p === null)) generateNewPieces();
+                renderGrid();
+                checkForClears();
+                placed = true;
+            }
+        }
+
+        if (!placed) {
+            originalPieceElement.style.opacity = '1';
+        }
+        
+        if (draggingClone && draggingClone.parentNode) {
+            document.body.removeChild(draggingClone);
+        }
+        isDragging = false;
+        draggedPieceData = null;
+        originalPieceElement = null;
+        draggingClone = null;
+        clearAllPreviews();
+
+        if (e.type === 'mouseup') {
+            document.removeEventListener('mousemove', handleDragMove);
+            document.removeEventListener('mouseup', handleDragEnd);
+        } else {
+            document.removeEventListener('touchmove', handleDragMove);
+            document.removeEventListener('touchend', handleDragEnd);
+        }
+    }
+
+    // --- Helper & Logic Functions ---
+    function getCellFromPoint(x, y) {
+        if (draggingClone) draggingClone.style.display = 'none';
+        const element = document.elementFromPoint(x, y);
+        if (draggingClone) draggingClone.style.display = '';
+        return element ? element.closest('.cell') : null;
+    }
+    
+    function drawGhost(baseRow, baseCol, shape) { shape.forEach((row, r) => { row.forEach((cellValue, c) => { if (cellValue) { const gridR = baseRow + r; const gridC = baseCol + c; const cell = gridElement.querySelector(`[data-row='${gridR}'][data-col='${gridC}']`); if (cell) cell.classList.add('ghost'); } }); }); }
+    function highlightCells(coordsSet) { coordsSet.forEach(coord => { const [r, c] = coord.split('-'); const cell = gridElement.querySelector(`[data-row='${r}'][data-col='${c}']`); if (cell) cell.classList.add('highlight'); }); }
+    function clearAllPreviews() { document.querySelectorAll('.ghost, .highlight').forEach(c => c.classList.remove('ghost', 'highlight')); }
+    function canPlacePiece(baseRow, baseCol, shape) { for (let r = 0; r < shape.length; r++) { for (let c = 0; c < shape[r].length; c++) { if (shape[r][c]) { const gridR = baseRow + r; const gridC = baseCol + c; if (gridR < 0 || gridR >= GRID_SIZE || gridC < 0 || gridC >= GRID_SIZE || gridState[gridR][gridC]) return false; } } } return true; }
+    function placePiece(baseRow, baseCol, shape, color) { let cellsPlaced = 0; shape.forEach((row, r) => { row.forEach((cellValue, c) => { if (cellValue) { gridState[baseRow + r][baseCol + c] = color; cellsPlaced++; } }); }); updateScore(cellsPlaced); }
+
+    function getPotentialClears(baseRow, baseCol, shape) {
+        const tempGrid = gridState.map(row => [...row]);
+        shape.forEach((row, r) => { row.forEach((cellValue, c) => { if (cellValue) { tempGrid[baseRow + r][baseCol + c] = 'filled'; } }); });
+        const cellsToHighlight = new Set();
+        for (let i = 0; i < GRID_SIZE; i++) { if (tempGrid[i].every(cell => cell !== null)) { for (let c = 0; c < GRID_SIZE; c++) cellsToHighlight.add(`${i}-${c}`); } if (tempGrid.every(row => row[i] !== null)) { for (let r = 0; r < GRID_SIZE; r++) cellsToHighlight.add(`${r}-${i}`); } }
+        for (let sqR = 0; sqR < 3; sqR++) { for (let sqC = 0; sqC < 3; sqC++) { let isFull = true; for (let r_off = 0; r_off < 3; r_off++) { for (let c_off = 0; c_off < 3; c_off++) { if (tempGrid[sqR * 3 + r_off][sqC * 3 + c_off] === null) isFull = false; } } if (isFull) { for (let r_off = 0; r_off < 3; r_off++) { for (let c_off = 0; c_off < 3; c_off++) { cellsToHighlight.add(`${sqR * 3 + r_off}-${sqC * 3 + c_off}`); } } } } }
+        return cellsToHighlight;
+    }
+
+    function checkForClears() { let cellsToClear = new Set(); let linesCleared = 0; for (let r = 0; r < GRID_SIZE; r++) { if (gridState[r].every(cell => cell !== null)) { linesCleared++; for (let c = 0; c < GRID_SIZE; c++) cellsToClear.add(`${r}-${c}`); } } for (let c = 0; c < GRID_SIZE; c++) { if (gridState.every(row => row[c] !== null)) { linesCleared++; for (let r = 0; r < GRID_SIZE; r++) cellsToClear.add(`${r}-${c}`); } } for (let sqR = 0; sqR < 3; sqR++) { for (let sqC = 0; sqC < 3; sqC++) { let isFull = true; let squareCells = []; for (let r_off = 0; r_off < 3; r_off++) { for (let c_off = 0; c_off < 3; c_off++) { const r = sqR * 3 + r_off; const c = sqC * 3 + c_off; squareCells.push(`${r}-${c}`); if (gridState[r][c] === null) isFull = false; } } if (isFull) { linesCleared++; squareCells.forEach(cell => cellsToClear.add(cell)); } } } if (cellsToClear.size > 0) { isClearing = true; cellsToClear.forEach(coord => { const [r, c] = coord.split('-'); gridElement.querySelector(`[data-row='${r}'][data-col='${c}']`).classList.add('clearing'); }); updateScore(linesCleared * 18 * linesCleared); setTimeout(() => { cellsToClear.forEach(coord => { const [r, c] = coord.split('-'); gridState[r][c] = null; }); renderGrid(); isClearing = false; if (isGameOver()) endGame(); }, CLEAR_ANIMATION_DURATION); } else { if (isGameOver()) endGame(); } }
+    function isGameOver() { const availablePieces = currentPieces.filter(p => p !== null); if (availablePieces.length === 0) return false; for (const piece of availablePieces) { for (let r = 0; r < GRID_SIZE; r++) { for (let c = 0; c < GRID_SIZE; c++) { if (canPlacePiece(r, c, piece.shape)) return false; } } } return true; }
+    function updateScore(points) { currentScore += points; scoreElement.textContent = currentScore; }
+    function endGame() { finalScoreElement.textContent = currentScore; gameOverModal.classList.remove('hidden'); }
+    restartButton.addEventListener('click', initGame);
+
+    // --- Start the game ---
+    initGame();
+});
