@@ -23,6 +23,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let touchOffset = { x: 0, y: 0, row: 0, col: 0 };
     const LIFTED_OFFSET_X = 0;
     const LIFTED_OFFSET_Y = -100;
+    // NEW: Variable to cache the grid's position for performance
+    let gridRect = null;
 
     // --- Game Initialization ---
     function initGame() {
@@ -96,6 +98,9 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         isDragging = true;
         
+        // Cache the grid's position and dimensions
+        gridRect = gridElement.getBoundingClientRect();
+        
         originalPieceElement = e.currentTarget;
         const pieceId = parseInt(originalPieceElement.dataset.pieceId);
         draggedPieceData = currentPieces[pieceId];
@@ -140,8 +145,8 @@ document.addEventListener('DOMContentLoaded', () => {
         draggingClone.style.top = `${clientY - touchOffset.y + LIFTED_OFFSET_Y}px`;
 
         clearAllPreviews();
-        // UPDATED: Use the offset to find the target cell where the clone is visually
-        const targetCell = getCellFromPoint(clientX, clientY + LIFTED_OFFSET_Y); 
+        // UPDATED: Use the new, precise calculation instead of elementFromPoint
+        const targetCell = getCellFromCoordinates(clientX, clientY + LIFTED_OFFSET_Y); 
         
         if (targetCell) {
             const baseRow = parseInt(targetCell.dataset.row) - touchOffset.row;
@@ -162,8 +167,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const clientX = e.type === 'touchend' ? e.changedTouches[0].clientX : e.clientX;
         const clientY = e.type === 'touchend' ? e.changedTouches[0].clientY : e.clientY;
         
-        // UPDATED: Use the offset to find the target cell where the clone is visually
-        const targetCell = getCellFromPoint(clientX, clientY + LIFTED_OFFSET_Y);
+        // UPDATED: Use the new, precise calculation here as well
+        const targetCell = getCellFromCoordinates(clientX, clientY + LIFTED_OFFSET_Y);
         let placed = false;
 
         if (targetCell) {
@@ -193,6 +198,7 @@ document.addEventListener('DOMContentLoaded', () => {
         draggedPieceData = null;
         originalPieceElement = null;
         draggingClone = null;
+        gridRect = null; // Clear cached grid position
         clearAllPreviews();
 
         if (e.type === 'mouseup') {
@@ -205,11 +211,28 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Helper & Logic Functions ---
-    function getCellFromPoint(x, y) {
-        if (draggingClone) draggingClone.style.display = 'none';
-        const element = document.elementFromPoint(x, y);
-        if (draggingClone) draggingClone.style.display = '';
-        return element ? element.closest('.cell') : null;
+    // NEW: Precise mathematical function to find a cell from screen coordinates.
+    function getCellFromCoordinates(x, y) {
+        if (!gridRect) return null; // Exit if grid position isn't cached
+
+        // Calculate position relative to the grid
+        const relativeX = x - gridRect.left;
+        const relativeY = y - gridRect.top;
+
+        // Check if the coordinates are outside the grid's bounds
+        if (relativeX < 0 || relativeX > gridRect.width || relativeY < 0 || relativeY > gridRect.height) {
+            return null;
+        }
+
+        // Calculate the row and column index
+        const col = Math.floor((relativeX / gridRect.width) * GRID_SIZE);
+        const row = Math.floor((relativeY / gridRect.height) * GRID_SIZE);
+
+        // Clamp values to be safe and get the element
+        const finalCol = Math.max(0, Math.min(GRID_SIZE - 1, col));
+        const finalRow = Math.max(0, Math.min(GRID_SIZE - 1, row));
+        
+        return gridElement.querySelector(`[data-row='${finalRow}'][data-col='${finalCol}']`);
     }
     
     function drawGhost(baseRow, baseCol, shape) { shape.forEach((row, r) => { row.forEach((cellValue, c) => { if (cellValue) { const gridR = baseRow + r; const gridC = baseCol + c; const cell = gridElement.querySelector(`[data-row='${gridR}'][data-col='${gridC}']`); if (cell) cell.classList.add('ghost'); } }); }); }
